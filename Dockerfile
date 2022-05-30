@@ -1,14 +1,14 @@
-FROM golang:latest
+FROM golang:alpine AS builder
 
-WORKDIR /app
-
+WORKDIR $GOPATH/src/app
 COPY go.mod ./
-RUN go mod download
-
 COPY *.go ./
 
-RUN go build -o /docker-challenge-go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -o /go/bin/docker-challenge-go .
 
-EXPOSE 8080
 
-CMD [ "/docker-challenge-go" ]
+FROM scratch
+WORKDIR /app
+
+COPY --from=builder /go/bin/docker-challenge-go .
+ENTRYPOINT [ "./docker-challenge-go" ]
